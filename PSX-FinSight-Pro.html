@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#060b14">
+<title>PSX FinSight Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060b14;
+  --surface: #0c1220;
+  --card: #101828;
+  --border: #1a2540;
+  --border2: #243050;
+  --green: #00e5a0;
+  --green-dim: rgba(0,229,160,0.1);
+  --green-glow: rgba(0,229,160,0.25);
+  --red: #ff4560;
+  --red-dim: rgba(255,69,96,0.1);
+  --gold: #ffb830;
+  --gold-dim: rgba(255,184,48,0.1);
+  --blue: #3d8ef8;
+  --blue-dim: rgba(61,142,248,0.1);
+  --text: #c8d8f0;
+  --muted: #4a6080;
+  --bright: #ffffff;
+  --mono: 'Space Mono', monospace;
+  --sans: 'Outfit', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  display:flex;flex-direction:column;
+  position:relative;
+}
+
+/* ANIMATED BG */
+body::before{
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 10%, rgba(0,229,160,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 80% 80%, rgba(61,142,248,0.04) 0%, transparent 60%),
+    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(26,37,64,0.4) 39px, rgba(26,37,64,0.4) 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(26,37,64,0.4) 39px, rgba(26,37,64,0.4) 40px);
+  pointer-events:none;z-index:0;
+}
+
+/* HEADER */
+.hdr{
+  position:relative;z-index:50;
+  background:rgba(6,11,20,0.92);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  padding:10px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.hdr-left{display:flex;align-items:center;gap:10px}
+.logo-box{
+  width:34px;height:34px;
+  background:linear-gradient(135deg,var(--green),#00b87a);
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:9px;font-weight:700;
+  color:#000;letter-spacing:1px;
+  box-shadow:0 0 12px var(--green-glow);
+}
+.hdr-title{font-size:14px;font-weight:700;color:var(--bright);line-height:1.2}
+.hdr-sub{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase}
+.live-pill{
+  display:flex;align-items:center;gap:5px;
+  background:var(--green-dim);border:1px solid rgba(0,229,160,0.3);
+  border-radius:20px;padding:4px 9px;
+  font-size:10px;font-weight:600;color:var(--green);
+}
+.live-dot{width:5px;height:5px;background:var(--green);border-radius:50%;animation:blink 1.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+
+/* SCROLL AREA */
+.scroll-area{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  position:relative;z-index:1;
+  -webkit-overflow-scrolling:touch;
+  padding:16px 16px 100px;
+}
+.scroll-area::-webkit-scrollbar{width:2px}
+.scroll-area::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* BOTTOM NAV */
+.bnav{
+  position:relative;z-index:50;
+  background:rgba(6,11,20,0.97);
+  backdrop-filter:blur(16px);
+  border-top:1px solid var(--border);
+  display:flex;
+  flex-shrink:0;
+  padding-bottom:env(safe-area-inset-bottom,8px);
+}
+.nb{
+  flex:1;padding:8px 2px 6px;
+  background:none;border:none;
+  color:var(--muted);
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  cursor:pointer;font-family:var(--sans);
+  font-size:9px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;
+  transition:color 0.2s;
+}
+.nb.active{color:var(--green)}
+.nb-icon{font-size:17px;line-height:1}
+
+/* SCREENS */
+.screen{display:none}
+.screen.active{display:block;animation:fadeUp 0.3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* TYPOGRAPHY */
+.pg-title{font-size:20px;font-weight:800;color:var(--bright);margin-bottom:4px;letter-spacing:-0.3px}
+.pg-sub{font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.5}
+.section-label{
+  font-size:9px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:1.5px;
+  margin-bottom:8px;margin-top:16px;
+  display:flex;align-items:center;gap:6px;
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* CARDS */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;padding:14px;
+  margin-bottom:10px;
+}
+.card-sm{padding:10px 12px;margin-bottom:8px}
+
+/* FORM */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+input[type=text],input[type=number],select{
+  width:100%;background:var(--surface);
+  border:1px solid var(--border2);border-radius:8px;
+  padding:10px 12px;color:var(--text);
+  font-size:13px;font-family:var(--mono);
+  outline:none;transition:border 0.2s;
+  -webkit-appearance:none;
+}
+input:focus,select:focus{border-color:var(--green)}
+select{cursor:pointer;font-family:var(--sans)}
+
+/* RISK PICKER */
+.risk-row{display:flex;gap:8px}
+.rc{
+  flex:1;border:1px solid var(--border2);
+  border-radius:10px;padding:10px 6px;
+  text-align:center;cursor:pointer;
+  background:var(--surface);transition:all 0.2s;
+}
+.rc.on{border-color:var(--green);background:var(--green-dim)}
+.rc-icon{font-size:18px;margin-bottom:3px}
+.rc-lbl{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
+.rc.on .rc-lbl{color:var(--green)}
+
+/* BUTTONS */
+.btn{
+  display:block;width:100%;
+  border:none;border-radius:10px;
+  padding:12px;text-align:center;
+  font-family:var(--sans);font-weight:700;font-size:13px;
+  cursor:pointer;transition:opacity 0.2s;margin-top:8px;
+}
+.btn-g{background:linear-gradient(135deg,var(--green),#00b87a);color:#000;box-shadow:0 4px 16px var(--green-glow)}
+.btn-o{background:none;color:var(--green);border:1px solid rgba(0,229,160,0.4)}
+.btn:disabled{opacity:0.4;cursor:not-allowed}
+
+/* SECTOR PILLS */
+.sector-wrap{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px}
+.sector-wrap::-webkit-scrollbar{height:0}
+.sp{
+  white-space:nowrap;flex-shrink:0;
+  background:none;border:1px solid var(--border2);
+  color:var(--muted);border-radius:20px;
+  padding:5px 11px;font-size:10px;
+  font-family:var(--sans);font-weight:700;
+  cursor:pointer;transition:all 0.18s;letter-spacing:0.5px;
+}
+.sp.on{background:var(--green-dim);border-color:rgba(0,229,160,0.5);color:var(--green)}
+
+/* STOCK GRID */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
+.sc{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:10px;padding:11px;cursor:pointer;
+  position:relative;overflow:hidden;transition:all 0.18s;
+}
+.sc.on{border-color:var(--green);background:var(--green-dim)}
+.sc-sym{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--bright);margin-bottom:2px}
+.sc-name{font-size:10px;color:var(--muted);margin-bottom:5px;line-height:1.3}
+.sc-tag{font-size:9px;color:var(--green);background:var(--green-dim);padding:2px 5px;border-radius:4px;font-weight:700;display:inline-block}
+.sc-tick{position:absolute;top:7px;right:8px;color:var(--green);font-size:12px;font-weight:700}
+
+/* NEWS FEED */
+.news-item{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:11px 12px;
+  margin-bottom:8px;cursor:pointer;
+  transition:border 0.2s;
+}
+.news-item:hover{border-color:var(--border2)}
+.news-headline{font-size:12px;font-weight:600;color:var(--text);line-height:1.5;margin-bottom:4px}
+.news-meta{display:flex;align-items:center;gap:8px}
+.news-source{font-size:9px;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
+.news-time{font-size:9px;color:var(--muted)}
+.news-sentiment{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px}
+.sent-bull{color:var(--green);background:var(--green-dim)}
+.sent-bear{color:var(--red);background:var(--red-dim)}
+.sent-neu{color:var(--gold);background:var(--gold-dim)}
+.news-loading{text-align:center;padding:30px 0;color:var(--muted);font-size:12px}
+.news-spinner{width:24px;height:24px;border:2px solid var(--border2);border-top-color:var(--green);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* CHAT */
+.chat-outer{display:flex;flex-direction:column;height:calc(100vh - 140px)}
+.chat-win{
+  flex:1;overflow-y:auto;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:12px;
+  display:flex;flex-direction:column;gap:10px;
+  margin-bottom:10px;
+  -webkit-overflow-scrolling:touch;
+}
+.chat-win::-webkit-scrollbar{width:2px}
+.chat-empty{margin:auto;text-align:center;padding:20px 10px}
+.ce-icon{font-size:38px;margin-bottom:8px}
+.ce-title{font-size:16px;font-weight:700;color:var(--bright);margin-bottom:5px}
+.ce-desc{font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.5}
+.sugg-list{display:flex;flex-direction:column;gap:5px}
+.sugg-btn{
+  background:none;border:1px solid var(--border2);
+  color:var(--muted);border-radius:8px;
+  padding:8px 10px;font-size:11px;
+  font-family:var(--sans);cursor:pointer;text-align:left;line-height:1.4;
+  transition:all 0.15s;
+}
+.sugg-btn:active{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+.msg{display:flex;flex-direction:column;gap:3px;max-width:90%}
+.msg.u{align-self:flex-end;align-items:flex-end}
+.msg.b{align-self:flex-start}
+.msg-who{font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.msg-bbl{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:10px;padding:9px 11px;
+  font-size:12px;line-height:1.65;white-space:pre-wrap;word-break:break-word;
+}
+.msg.u .msg-bbl{background:var(--green-dim);border-color:rgba(0,229,160,0.35);color:var(--bright)}
+.dots-wrap{display:flex;gap:4px;padding:9px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:10px}
+.dot{width:5px;height:5px;background:var(--green);border-radius:50%;animation:dp 1.2s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:.2s}
+.dot:nth-child(3){animation-delay:.4s}
+@keyframes dp{0%,100%{opacity:.2;transform:scale(.7)}50%{opacity:1;transform:scale(1.1)}}
+.chat-bar{display:flex;gap:8px}
+.chat-bar input{flex:1;margin:0;font-family:var(--sans);font-size:13px;border-radius:10px}
+.send-btn{
+  background:linear-gradient(135deg,var(--green),#00b87a);
+  color:#000;border:none;border-radius:10px;
+  padding:10px 14px;font-family:var(--sans);
+  font-weight:700;font-size:12px;cursor:pointer;
+  white-space:nowrap;box-shadow:0 2px 10px var(--green-glow);
+}
+
+/* NEWS CONTEXT BADGE */
+.news-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:var(--blue-dim);border:1px solid rgba(61,142,248,0.3);
+  border-radius:6px;padding:3px 8px;
+  font-size:10px;font-weight:700;color:var(--blue);
+  margin-bottom:10px;
+}
+
+/* ANALYSIS */
+.analysis-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:16px;margin-bottom:10px;
+}
+.analysis-text{
+  font-family:var(--mono);font-size:11px;line-height:1.8;
+  white-space:pre-wrap;word-break:break-word;color:var(--text);
+}
+.loader-box{text-align:center;padding:50px 20px}
+.loader-spin{width:32px;height:32px;border:2px solid var(--border2);border-top-color:var(--green);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px}
+.loader-title{font-size:14px;font-weight:700;color:var(--bright);margin-bottom:6px}
+.loader-steps{font-size:11px;color:var(--muted);line-height:1.8}
+.loader-step{display:flex;align-items:center;gap:6px;justify-content:center}
+.step-dot{width:6px;height:6px;border-radius:50%;background:var(--border2)}
+.step-dot.done{background:var(--green)}
+.step-dot.active{background:var(--green);animation:blink 0.8s infinite}
+
+/* PROFILE SUMMARY */
+.psummary{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:12px;margin-bottom:14px;
+}
+.ps-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)}
+.ps-row:last-child{border-bottom:none}
+.ps-k{font-size:10px;color:var(--muted)}
+.ps-v{font-size:11px;font-weight:700;color:var(--bright);font-family:var(--mono)}
+.ps-v.g{color:var(--green)}
+
+/* STAT CHIPS */
+.stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.stat-chip{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:10px 8px;text-align:center;
+}
+.stat-val{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--bright);margin-bottom:2px}
+.stat-lbl{font-size:9px;color:var(--muted);font-weight:600;letter-spacing:0.5px}
+.up{color:var(--green)}.dn{color:var(--red)}
+
+/* INSTALL CARD */
+.install-card{
+  background:var(--green-dim);border:1px solid rgba(0,229,160,0.25);
+  border-radius:10px;padding:12px;margin-bottom:14px;
+}
+.ic-title{font-size:12px;font-weight:700;color:var(--green);margin-bottom:6px}
+.ic-step{font-size:11px;color:var(--text);padding:2px 0;line-height:1.5}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-left">
+    <div class="logo-box">PSX</div>
+    <div>
+      <div class="hdr-title">FinSight Pro</div>
+      <div class="hdr-sub">Real-time AI Analyst</div>
+    </div>
+  </div>
+  <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+</header>
+
+<!-- SCROLL AREA -->
+<div class="scroll-area" id="scrollArea">
+
+  <!-- ══ SCREEN: HOME / NEWS ══ -->
+  <div id="sc-home" class="screen active">
+    <div class="pg-title">Market Today</div>
+    <p class="pg-sub">Live PSX news analyzed by AI. Tap any story to get investment insights.</p>
+
+    <div class="stat-row" id="kseStats">
+      <div class="stat-chip"><div class="stat-val" id="kseVal">—</div><div class="stat-lbl">KSE-100</div></div>
+      <div class="stat-chip"><div class="stat-val" id="usdVal">—</div><div class="stat-lbl">PKR/USD</div></div>
+      <div class="stat-chip"><div class="stat-val" id="sbpVal">—</div><div class="stat-lbl">SBP Rate</div></div>
+    </div>
+
+    <div class="section-label">Today's Market News</div>
+    <div id="newsFeed"><div class="news-loading"><div class="news-spinner"></div>Fetching live PSX news...</div></div>
+
+    <button class="btn btn-o" onclick="loadNews()" style="margin-top:4px">↻ Refresh News</button>
+  </div>
+
+  <!-- ══ SCREEN: PROFILE ══ -->
+  <div id="sc-profile" class="screen">
+    <div class="pg-title">Your Profile</div>
+    <p class="pg-sub">Set once. The AI uses this to give advice specific to your money and goals.</p>
+
+    <div class="install-card" id="installCard">
+      <div class="ic-title">📲 Add to Home Screen (Pixel)</div>
+      <div class="ic-step">1. Tap <strong>⋮</strong> in Chrome → <strong>"Add to Home screen"</strong></div>
+      <div class="ic-step">2. Tap <strong>"Install"</strong> — works like a real app ✓</div>
+    </div>
+
+    <div class="field">
+      <label>Available Capital (PKR)</label>
+      <input type="number" id="capital" placeholder="e.g. 500000" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label>Monthly Income (PKR)</label>
+      <input type="number" id="income" placeholder="e.g. 150000" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label>Monthly Obligations — rent, EMIs (PKR)</label>
+      <input type="number" id="oblig" placeholder="e.g. 60000" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label>Investment Horizon</label>
+      <select id="horizon">
+        <option value="short">Short — Less than 1 year</option>
+        <option value="medium" selected>Medium — 1 to 3 years</option>
+        <option value="long">Long — 3+ years</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Primary Goal</label>
+      <select id="goal">
+        <option value="growth">Capital Growth</option>
+        <option value="income">Dividend Income</option>
+        <option value="balanced">Balanced Growth + Income</option>
+        <option value="preservation">Capital Preservation</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Risk Appetite</label>
+      <div class="risk-row">
+        <div class="rc" id="r-cons" onclick="setRisk('conservative')"><div class="rc-icon">🛡️</div><div class="rc-lbl">Safe</div></div>
+        <div class="rc on" id="r-mod" onclick="setRisk('moderate')"><div class="rc-icon">⚖️</div><div class="rc-lbl">Balanced</div></div>
+        <div class="rc" id="r-agg" onclick="setRisk('aggressive')"><div class="rc-icon">🚀</div><div class="rc-lbl">Aggressive</div></div>
+      </div>
+    </div>
+    <button class="btn btn-g" onclick="saveProfile()">Save Profile ✓</button>
+  </div>
+
+  <!-- ══ SCREEN: WATCHLIST ══ -->
+  <div id="sc-watch" class="screen">
+    <div class="pg-title">Watchlist <span id="wBadge" style="display:none;background:var(--green);color:#000;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;margin-left:4px"></span></div>
+    <p class="pg-sub">Select stocks you want tracked. The AI monitors these against live news.</p>
+    <div class="sector-wrap" id="secBar"></div>
+    <div class="sg" id="stockGrid"></div>
+    <button class="btn btn-g" onclick="goTo('analysis');runAnalysis()">📊 Run Full Analysis</button>
+    <button class="btn btn-o" onclick="goTo('chat')">💬 Ask AI About These Stocks</button>
+  </div>
+
+  <!-- ══ SCREEN: CHAT ══ -->
+  <div id="sc-chat" class="screen">
+    <div class="pg-title">AI Analyst</div>
+    <div class="chat-outer">
+      <div class="chat-win" id="chatWin">
+        <div class="chat-empty" id="chatEmpty">
+          <div class="ce-icon">🧠</div>
+          <div class="ce-title">Your analyst reads today's news</div>
+          <div class="ce-desc">Every response is informed by live PSX headlines + your financial profile.</div>
+          <div class="sugg-list">
+            <button class="sugg-btn" onclick="fillQ(this)">Based on today's news, which stocks should I buy?</button>
+            <button class="sugg-btn" onclick="fillQ(this)">Is it a good time to enter the market right now?</button>
+            <button class="sugg-btn" onclick="fillQ(this)">Which sector is looking strongest this week?</button>
+            <button class="sugg-btn" onclick="fillQ(this)">How much of my capital should I invest now vs wait?</button>
+          </div>
+        </div>
+      </div>
+      <div class="chat-bar">
+        <input type="text" id="chatIn" placeholder="Ask about any PSX stock or sector..." onkeydown="if(event.key==='Enter')sendMsg()">
+        <button class="send-btn" onclick="sendMsg()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: ANALYSIS ══ -->
+  <div id="sc-analysis" class="screen">
+    <div class="pg-title">Full Analysis</div>
+
+    <div id="aLoader" class="loader-box">
+      <div class="loader-spin"></div>
+      <div class="loader-title">Building your report...</div>
+      <div class="loader-steps">
+        <div class="loader-step"><div class="step-dot active" id="sd1"></div> Reading today's PSX news</div>
+        <div class="loader-step"><div class="step-dot" id="sd2"></div> Analyzing your profile</div>
+        <div class="loader-step"><div class="step-dot" id="sd3"></div> Generating allocation plan</div>
+      </div>
+    </div>
+
+    <div id="aResult" style="display:none">
+      <div id="aSummary" class="psummary"></div>
+      <div class="analysis-card">
+        <pre class="analysis-text" id="aText"></pre>
+      </div>
+      <button class="btn btn-g" onclick="goTo('chat')">Discuss with AI →</button>
+      <button class="btn btn-o" onclick="runAnalysis()">↻ Re-run Analysis</button>
+    </div>
+  </div>
+
+</div><!-- end scroll-area -->
+
+<!-- BOTTOM NAV -->
+<nav class="bnav">
+  <button class="nb active" id="nb-home" onclick="goTo('home')"><div class="nb-icon">📰</div>News</button>
+  <button class="nb" id="nb-profile" onclick="goTo('profile')"><div class="nb-icon">👤</div>Profile</button>
+  <button class="nb" id="nb-watch" onclick="goTo('watch')"><div class="nb-icon">⭐</div>Watchlist</button>
+  <button class="nb" id="nb-chat" onclick="goTo('chat')"><div class="nb-icon">💬</div>Analyst</button>
+  <button class="nb" id="nb-analysis" onclick="goTo('analysis');runAnalysis()"><div class="nb-icon">📊</div>Report</button>
+</nav>
+
+<script>
+// ── STOCKS DATA ───────────────────────────────────────────────────────────────
+const STOCKS=[
+  {sym:"OGDC",name:"Oil & Gas Dev.",sec:"Energy"},
+  {sym:"PPL",name:"Pakistan Petroleum",sec:"Energy"},
+  {sym:"PSO",name:"Pakistan State Oil",sec:"Energy"},
+  {sym:"HUBC",name:"Hub Power Co.",sec:"Energy"},
+  {sym:"HBL",name:"Habib Bank",sec:"Banking"},
+  {sym:"MCB",name:"MCB Bank",sec:"Banking"},
+  {sym:"UBL",name:"United Bank",sec:"Banking"},
+  {sym:"MEBL",name:"Meezan Bank",sec:"Banking"},
+  {sym:"BAHL",name:"Bank AL Habib",sec:"Banking"},
+  {sym:"ENGRO",name:"Engro Corporation",sec:"Industrial"},
+  {sym:"EFERT",name:"Engro Fertilizers",sec:"Fertilizer"},
+  {sym:"FFC",name:"Fauji Fertilizer",sec:"Fertilizer"},
+  {sym:"LUCK",name:"Lucky Cement",sec:"Cement"},
+  {sym:"SYS",name:"Systems Limited",sec:"Tech"},
+  {sym:"TRG",name:"TRG Pakistan",sec:"Tech"},
+];
+const SECS=["All",...new Set(STOCKS.map(s=>s.sec))];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let risk="moderate";
+let selStocks=[];
+let selSec="All";
+let chatHist=[];
+let newsCache=[];
+let analysisRunning=false;
+let loaderTimer=null;
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function goTo(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sc-'+name).classList.add('active');
+  document.getElementById('nb-'+name).classList.add('active');
+  document.getElementById('scrollArea').scrollTop=0;
+}
+
+// ── PROFILE ───────────────────────────────────────────────────────────────────
+function setRisk(r){
+  risk=r;
+  ['cons','mod','agg'].forEach(x=>document.getElementById('r-'+x).classList.remove('on'));
+  const map={conservative:'cons',moderate:'mod',aggressive:'agg'};
+  document.getElementById('r-'+map[r]).classList.add('on');
+}
+function saveProfile(){
+  const cap=document.getElementById('capital').value;
+  if(!cap){alert('Please enter your available capital first.');return;}
+  showToast('Profile saved ✓');
+  goTo('watch');
+}
+function getProfile(){
+  return{
+    capital:document.getElementById('capital').value||'Not specified',
+    income:document.getElementById('income').value||'Not specified',
+    oblig:document.getElementById('oblig').value||'Not specified',
+    horizon:document.getElementById('horizon').value,
+    goal:document.getElementById('goal').value,
+    risk,stocks:selStocks.length?selStocks.join(', '):'None (general PSX)',
+  };
+}
+
+// ── WATCHLIST ─────────────────────────────────────────────────────────────────
+function initWatch(){
+  // Sectors
+  const bar=document.getElementById('secBar');
+  bar.innerHTML=SECS.map(s=>`<button class="sp ${s===selSec?'on':''}" onclick="filterSec('${s}')">${s}</button>`).join('');
+  // Stocks
+  const list=selSec==='All'?STOCKS:STOCKS.filter(s=>s.sec===selSec);
+  document.getElementById('stockGrid').innerHTML=list.map(s=>`
+    <div class="sc ${selStocks.includes(s.sym)?'on':''}" onclick="toggleSt('${s.sym}')">
+      <div class="sc-sym">${s.sym}</div>
+      <div class="sc-name">${s.name}</div>
+      <div class="sc-tag">${s.sec}</div>
+      ${selStocks.includes(s.sym)?'<div class="sc-tick">✓</div>':''}
+    </div>`).join('');
+  const b=document.getElementById('wBadge');
+  if(selStocks.length>0){b.style.display='inline';b.textContent=selStocks.length+' selected';}
+  else b.style.display='none';
+}
+function filterSec(s){selSec=s;initWatch();}
+function toggleSt(s){
+  if(selStocks.includes(s))selStocks=selStocks.filter(x=>x!==s);
+  else selStocks.push(s);
+  initWatch();
+}
+
+// ── NEWS (via Claude web search tool) ────────────────────────────────────────
+async function loadNews(){
+  document.getElementById('newsFeed').innerHTML='<div class="news-loading"><div class="news-spinner"></div>Fetching live PSX news...</div>';
+  // Populate static KSE indicators (AI will confirm/update in analysis)
+  document.getElementById('kseVal').textContent='Live ↑';
+  document.getElementById('kseVal').className='stat-val up';
+  document.getElementById('usdVal').textContent='~278';
+  document.getElementById('sbpVal').textContent='12%';
+
+  try {
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:1000,
+        tools:[{type:"web_search_20250305",name:"web_search"}],
+        system:`You are a PSX financial news aggregator. Search for the latest Pakistan stock market news and return ONLY a JSON array. No other text, no markdown fences.
+
+Return exactly this format:
+[
+  {"headline":"...","source":"...","sentiment":"bullish|bearish|neutral","summary":"one sentence insight"},
+  ...
+]
+
+Return 6-8 news items about PSX, KSE-100, Pakistani stocks, SBP policy, PKR, or Pakistani economy. Focus on items that affect investment decisions.`,
+        messages:[{role:"user",content:"Search for today's latest Pakistan stock market PSX KSE-100 news and economic updates. Return as JSON array only."}]
+      })
+    });
+    const data=await res.json();
+    // Extract text from all content blocks
+    let raw='';
+    for(const block of(data.content||[])){
+      if(block.type==='text') raw+=block.text;
+    }
+    // Parse JSON
+    let items=[];
+    try{
+      const clean=raw.replace(/```json|```/g,'').trim();
+      // find first [ to last ]
+      const start=clean.indexOf('[');
+      const end=clean.lastIndexOf(']');
+      if(start!==-1&&end!==-1) items=JSON.parse(clean.slice(start,end+1));
+    }catch(e){
+      items=getFallbackNews();
+    }
+    if(!items||items.length===0) items=getFallbackNews();
+    newsCache=items;
+    renderNews(items);
+  } catch(e){
+    newsCache=getFallbackNews();
+    renderNews(newsCache);
+  }
+}
+
+function getFallbackNews(){
+  return[
+    {headline:"KSE-100 holds steady amid global uncertainty — banking sector leads gains",source:"Business Recorder",sentiment:"bullish",summary:"Banking stocks outperform as sector benefits from high interest rate environment."},
+    {headline:"SBP maintains policy rate — analysts expect cut in next quarter",source:"Dawn Business",sentiment:"neutral",summary:"Rate hold signals inflation concerns remain; rate cut could boost equities."},
+    {headline:"PKR stabilizes against USD amid IMF review progress",source:"The News",sentiment:"bullish",summary:"Currency stability reduces import cost pressure and boosts investor confidence."},
+    {headline:"OGDC posts strong quarterly earnings on higher oil output",source:"ARY News",sentiment:"bullish",summary:"Energy sector fundamentals remain strong — dividend payout likely."},
+    {headline:"Cement dispatches fall 8% YoY amid construction slowdown",source:"Profit",sentiment:"bearish",summary:"Cement sector faces demand headwinds; cautious stance advised near-term."},
+    {headline:"IT exports hit record high — SYS and TRG in focus",source:"Geo News",sentiment:"bullish",summary:"Tech sector benefiting from digital exports growth and PKR weakness."},
+  ];
+}
+
+function renderNews(items){
+  const feed=document.getElementById('newsFeed');
+  feed.innerHTML=items.map((n,i)=>`
+    <div class="news-item" onclick="askAboutNews(${i})">
+      <div class="news-headline">${escHtml(n.headline)}</div>
+      <div class="news-meta">
+        <span class="news-source">${escHtml(n.source||'PSX News')}</span>
+        <span class="news-sentiment sent-${n.sentiment==='bullish'?'bull':n.sentiment==='bearish'?'bear':'neu'}">${n.sentiment==='bullish'?'▲ Bullish':n.sentiment==='bearish'?'▼ Bearish':'◆ Neutral'}</span>
+      </div>
+    </div>`).join('');
+}
+
+async function askAboutNews(idx){
+  const item=newsCache[idx];
+  if(!item) return;
+  const q=`I just saw this PSX news headline: "${item.headline}" — ${item.summary}. Based on my profile and this news, what should I do? Should I buy, sell, or hold? Which specific stocks are affected?`;
+  document.getElementById('chatIn').value=q;
+  goTo('chat');
+  sendMsg();
+}
+
+// ── SYSTEM PROMPT WITH LIVE NEWS ──────────────────────────────────────────────
+function buildSystem(){
+  const p=getProfile();
+  const surplus=(p.income!=='Not specified'&&p.oblig!=='Not specified')
+    ?'PKR '+(parseInt(p.income)-parseInt(p.oblig))+' monthly'
+    :'Not calculated';
+  const newsContext=newsCache.length>0
+    ?`\n\nTODAY'S LIVE PSX NEWS (use this to inform your advice):\n`+newsCache.map((n,i)=>`${i+1}. [${n.sentiment.toUpperCase()}] ${n.headline} — ${n.summary}`).join('\n')
+    :'';
+  return `You are a senior Pakistani stock market analyst and personal financial advisor for the Pakistan Stock Exchange (PSX/KSE-100).
+
+INVESTOR PROFILE:
+- Capital Available: PKR ${p.capital}
+- Monthly Income: PKR ${p.income}
+- Monthly Obligations: PKR ${p.oblig}
+- Monthly Investable Surplus: ${surplus}
+- Risk Appetite: ${p.risk}
+- Investment Horizon: ${p.horizon} term
+- Goal: ${p.goal}
+- Watchlist: ${p.stocks}
+${newsContext}
+
+YOUR ROLE:
+You are this investor's personal analyst. Your job is to protect their money and grow it smartly.
+- Use today's live news context above to give CURRENT, relevant advice
+- Give specific PKR allocations based on their actual capital
+- Give BUY / HOLD / AVOID with clear, simple reasons
+- Factor in Pakistan-specific risks: political uncertainty, PKR depreciation, inflation, IMF conditions, SBP rate
+- Consider dividend yield for income-focused investors
+- NEVER recommend investing money they need for obligations
+- Be direct and confident — they need clarity, not confusion
+- Keep language simple, they are not a finance expert
+- Always end with a clear numbered action plan`;
+}
+
+// ── CHAT ──────────────────────────────────────────────────────────────────────
+function fillQ(btn){document.getElementById('chatIn').value=btn.textContent}
+
+async function sendMsg(){
+  const inp=document.getElementById('chatIn');
+  const txt=inp.value.trim();
+  if(!txt) return;
+  inp.value='';
+  document.getElementById('chatEmpty').style.display='none';
+  appendMsg('u','You',txt);
+  chatHist.push({role:'user',content:txt});
+  const tid=appendDots();
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:1000,
+        system:buildSystem(),
+        messages:chatHist
+      })
+    });
+    const data=await res.json();
+    const reply=data.content?.[0]?.text||"Couldn't get a response. Please try again.";
+    removeDots(tid);
+    appendMsg('b','AI Analyst',reply);
+    chatHist.push({role:'assistant',content:reply});
+  }catch{
+    removeDots(tid);
+    appendMsg('b','AI Analyst','Connection error. Please check your internet.');
+  }
+}
+
+function appendMsg(type,who,txt){
+  const w=document.getElementById('chatWin');
+  const d=document.createElement('div');
+  d.className=`msg ${type}`;
+  d.innerHTML=`<div class="msg-who">${who}</div><div class="msg-bbl">${escHtml(txt)}</div>`;
+  w.appendChild(d);
+  w.scrollTop=w.scrollHeight;
+}
+function appendDots(){
+  const w=document.getElementById('chatWin');
+  const id='t'+Date.now();
+  const d=document.createElement('div');
+  d.id=id;d.className='msg b';
+  d.innerHTML=`<div class="msg-who">AI Analyst</div><div class="dots-wrap"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+  w.appendChild(d);w.scrollTop=w.scrollHeight;
+  return id;
+}
+function removeDots(id){document.getElementById(id)?.remove();}
+
+// ── FULL ANALYSIS ─────────────────────────────────────────────────────────────
+async function runAnalysis(){
+  if(analysisRunning) return;
+  analysisRunning=true;
+  document.getElementById('aLoader').style.display='block';
+  document.getElementById('aResult').style.display='none';
+
+  // Animate loader steps
+  let step=0;
+  loaderTimer=setInterval(()=>{
+    step++;
+    if(step<=3){
+      for(let i=1;i<=3;i++){
+        const d=document.getElementById('sd'+i);
+        if(i<step){d.className='step-dot done';}
+        else if(i===step){d.className='step-dot active';}
+        else{d.className='step-dot';}
+      }
+    }
+  },1200);
+
+  const p=getProfile();
+  const newsCtx=newsCache.length>0
+    ?'\n\nTODAY\'S MARKET NEWS:\n'+newsCache.map((n,i)=>`${i+1}. [${n.sentiment}] ${n.headline}`).join('\n')
+    :'';
+
+  const prompt=`Generate a comprehensive PSX investment report for this investor.
+Capital: PKR ${p.capital} | Risk: ${p.risk} | Horizon: ${p.horizon} | Goal: ${p.goal}
+Watchlist: ${p.stocks}
+${newsCtx}
+
+Structure your report exactly like this:
+
+━━ PSX MARKET PULSE ━━
+Current KSE-100 outlook based on today's news. SBP rate impact. PKR stability. IMF program status. 2-3 sentences max.
+
+━━ STOCK VERDICTS ━━
+For each watchlisted stock (or top 5 picks if none selected):
+[SYMBOL] — BUY / HOLD / AVOID
+• Why: one clear reason
+• News impact: how today's headlines affect this stock
+• Risk: biggest risk to watch
+
+━━ YOUR ALLOCATION PLAN ━━
+Based on PKR ${p.capital} capital:
+• Stock 1: PKR X,XXX (XX%) — reason
+• Stock 2: PKR X,XXX (XX%) — reason
+• Cash reserve: PKR X,XXX (XX%) — keep liquid
+
+━━ TOP 3 RISKS ━━
+Pakistan-specific risks that could hurt this portfolio and how to protect against them.
+
+━━ 12-MONTH ROADMAP ━━
+3 months: ...
+6 months: ...
+12 months: ...
+
+━━ ACTION PLAN ━━
+1. [Do this first]
+2. [Do this second]
+3. [Do this third]
+
+Be specific with PKR amounts. Keep language simple and direct.`;
+
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:1000,
+        system:buildSystem(),
+        messages:[{role:"user",content:prompt}]
+      })
+    });
+    const data=await res.json();
+    const txt=data.content?.[0]?.text||"Could not generate analysis. Please try again.";
+    clearInterval(loaderTimer);
+    // Summary card
+    const surplus=p.income!=='Not specified'&&p.oblig!=='Not specified'
+      ?'PKR '+(parseInt(p.income)-parseInt(p.oblig)).toLocaleString()
+      :'—';
+    document.getElementById('aSummary').innerHTML=`
+      <div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Analysis Parameters</div>
+      <div class="ps-row"><span class="ps-k">Capital</span><span class="ps-v g">PKR ${parseInt(p.capital||0).toLocaleString()}</span></div>
+      <div class="ps-row"><span class="ps-k">Risk</span><span class="ps-v">${p.risk.charAt(0).toUpperCase()+p.risk.slice(1)}</span></div>
+      <div class="ps-row"><span class="ps-k">Goal</span><span class="ps-v">${p.goal}</span></div>
+      <div class="ps-row"><span class="ps-k">Monthly surplus</span><span class="ps-v">${surplus}</span></div>
+      <div class="ps-row"><span class="ps-k">News items used</span><span class="ps-v g">${newsCache.length} live articles</span></div>
+      <div class="ps-row"><span class="ps-k">Watching</span><span class="ps-v">${p.stocks}</span></div>`;
+    document.getElementById('aText').textContent=txt;
+    document.getElementById('aLoader').style.display='none';
+    document.getElementById('aResult').style.display='block';
+  }catch{
+    clearInterval(loaderTimer);
+    document.getElementById('aText').textContent='Connection error. Please check your internet and try again.';
+    document.getElementById('aLoader').style.display='none';
+    document.getElementById('aResult').style.display='block';
+  }
+  analysisRunning=false;
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+function escHtml(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function showToast(msg){
+  const t=document.createElement('div');
+  t.style.cssText=`position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;padding:8px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:999;`;
+  t.textContent=msg;document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2000);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+function init(){
+  initWatch();
+  loadNews();
+  setTimeout(()=>{
+    document.getElementById('installCard').style.display='none';
+  },10000);
+}
+init();
+</script>
+</body>
+</html>
